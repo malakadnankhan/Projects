@@ -1,1 +1,9 @@
-Machine learning project
+#Machine learning project: Online payment Fraud detection
+
+
+
+
+
+print("Logistic Regression Accuracy Score:", accuracy_score(y_test,y_pred) )
+print("\nDecision Tree Accuracy Score: ", accuracy_score(y_test,y_pred_dt))
+print("\nRandom Forest accuracy score: ", accuracy_score(y_test,y_pred_rf))
