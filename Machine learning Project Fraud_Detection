@@ -1,9 +1,90 @@
 #Machine learning project: Online payment Fraud detection
 
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+import random
+
+data = pd.read_csv('dataset.csv')
+data.head()
+
+data.describe()
+data.isnull().sum()
+data.drop_duplicates()
+
+fig = plt.figure(figsize =(10, 7))
+data['type'].value_counts(normalize=True).plot(kind='bar')
+plt.show()
+
+print("No Frauds Percentage:",data['isFraud'].value_counts()[0]/len(data['isFraud'])*100)
+print("Frauds Percentage:",data['isFraud'].value_counts()[1]/len(data['isFraud'])*100)
+data.drop(['isFlaggedFraud','nameOrig','nameDest'], axis = 1, inplace = True)
 
 
+correlationdata = data.copy()
+correlationdata.drop(['type'], axis = 1, inplace = True)
 
+fig = plt.figure(figsize =(10, 7))
+sns.heatmap(correlationdata.corr(), annot = True)
+plt.show()
+
+dataf = pd.get_dummies(data = data,columns = ['type'], drop_first = True)
+dataf.head()
+
+
+from sklearn.preprocessing import RobustScaler
+rscaler = RobustScaler()
+scaled_data = rscaler.fit_transform(dataf)
+data_sc = pd.DataFrame(scaled_data, columns = dataf.columns)
+
+data_sc.head()
+
+nonfraud = dataf[dataf['isFraud']==0]
+fraud = dataf[dataf['isFraud']==1]
+nonfraud = nonfraud.sample(n=8300, random_state = 1)
+
+frauddata = pd.merge(fraud,nonfraud, how = "outer")
+x = frauddata.drop('isFraud', axis = 1)
+y = frauddata['isFraud']
+
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+
+
+x_train,x_test,y_train,y_test = train_test_split(x,y,train_size = 0.3, random_state = 42)
+
+#LogisticRegression
+from sklearn.linear_model import LogisticRegression
+logreg = LogisticRegression()
+logreg.fit(x_train,y_train)
+
+y_pred = logreg.predict(x_test)
+
+#DecisionTreeClassifier
+from sklearn.tree import DecisionTreeClassifier
+
+dt = DecisionTreeClassifier()
+dt.fit(x_train,y_train)
+
+y_pred_dt = dt.predict(x_test)
+
+
+#RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier
+
+rf = RandomForestClassifier()
+rf.fit(x_train,y_train)
+
+y_pred_rf = rf.predict(x_test)
+
+from sklearn.metrics import accuracy_score, classification_report
+print("Logistic Regression classification report: \n\n"  ,classification_report(y_test,y_pred))
+print("Decision Tree classification report: \n\n"  ,classification_report(y_test,y_pred_dt))
+print("Random Forest classification report: \n\n"  ,classification_report(y_test,y_pred_rf))
 
 print("Logistic Regression Accuracy Score:", accuracy_score(y_test,y_pred) )
 print("\nDecision Tree Accuracy Score: ", accuracy_score(y_test,y_pred_dt))
 print("\nRandom Forest accuracy score: ", accuracy_score(y_test,y_pred_rf))
+
+Random Forest has the highest accuracy.
